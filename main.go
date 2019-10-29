@@ -59,19 +59,18 @@ func main() {
 			panic(err)
 		}
 
-		for _, d := range list.Items {
+		for _, p := range list.Items {
 			pod := DataUsage{
-				Name:   d.Name,
+				Name:   p.Name,
 				Dec:    &inf.Dec{},
 				Memory: &inf.Dec{},
 			}
-			for _, c := range d.Spec.Containers {
+			for _, c := range p.Spec.Containers {
 				pod.Inner = append(pod.Inner, DataUsage{
 					Name:   c.Name,
 					Dec:    c.Resources.Requests.Cpu().AsDec(),
 					Memory: c.Resources.Requests.Memory().AsDec(),
 				})
-				c.Resources.Requests.Memory()
 				pod.Dec.Add(pod.Dec, c.Resources.Requests.Cpu().AsDec())
 				pod.Memory.Add(pod.Memory, c.Resources.Requests.Memory().AsDec())
 			}
@@ -82,7 +81,6 @@ func main() {
 		top.Dec.Add(top.Dec, namespaceItem.Dec)
 		top.Memory.Add(top.Memory, namespaceItem.Memory)
 		top.Inner = append(top.Inner, namespaceItem)
-
 	}
 
 	var dataUsage []DataUsage
@@ -105,7 +103,7 @@ func PrintDu(dataUsage []DataUsage, leftpad string) {
 		}
 
 		mem, _ := du.Memory.Unscaled()
-		fmt.Printf("%s%s%s CPU %d MB %s\n", leftpad, branch, du.Dec, mem/1024/1024, du.Name)
+		fmt.Printf("%s%s%s CPU %d MB %s (%d)\n", leftpad, branch, du.Dec, mem/1024/1024, du.Name, len(du.Inner))
 		newleftpad := leftpad + "│    "
 		if i == len(dataUsage)-1 {
 			newleftpad = leftpad + "    "
@@ -119,4 +117,5 @@ type DataUsage struct {
 	Dec    *inf.Dec
 	Memory *inf.Dec
 	Inner  []DataUsage
+	Kind   string
 }
